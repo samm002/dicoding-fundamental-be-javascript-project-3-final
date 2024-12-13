@@ -1,7 +1,9 @@
 const redis = require('redis');
+const generateSecondFromHour = require('../utils/generateSecondFromHour');
 
 class Cache {
   constructor() {
+    this._generateSecondFromHour = generateSecondFromHour;
     this._client = redis.createClient({
       socket: {
         host: process.env.REDIS_SERVER,
@@ -19,9 +21,10 @@ class Cache {
     this._client.connect();
   }
 
-  async set(key, value, expirationInSecond = 3600) {
+  // Fix set cache duration to 30 minutes
+  async set(key, value, expirationInSecond = process.env.CACHE_DURATION || 0.5) {
     await this._client.set(key, value, {
-      EX: expirationInSecond,
+      EX: this._generateSecondFromHour(expirationInSecond),
     });
   }
 
